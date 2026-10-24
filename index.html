@@ -138,13 +138,13 @@
 
             <!-- 收款码区域 -->
             <div
-              class="w-52 h-52 sm:w-64 sm:h-64 mx-auto glass rounded-2xl flex items-center justify-center border-dashed border-2 border-white/10 relative group"
+              class="w-52 h-52 sm:w-64 sm:h-64 mx-auto glass rounded-2xl overflow-hidden relative group"
             >
-              <span
-                class="text-sm text-secondary group-hover:text-white transition-colors"
-                >请在此处替换<br />收款二维码</span
-              >
-              <!-- <img src="your-qr-code.png" class="absolute inset-0 w-full h-full object-contain p-4"> -->
+              <img
+                src="https://cdn.luogu.com.cn/upload/image_hosting/20k9dvo3.webp"
+                alt="收款码"
+                class="w-full h-full object-contain p-2 bg-white"
+              />
             </div>
 
             <div class="space-y-4 pt-4">
@@ -153,8 +153,8 @@
                 2. 添加微信发送截图:
                 <b
                   class="text-white cursor-pointer hover:underline"
-                  onclick="copyText('your_wechat_id', '微信号已复制')"
-                  >your_wechat_id</b
+                  onclick="copyText('xiancctv10', '微信号已复制')"
+                  >xiancctv10</b
                 >
               </p>
             </div>
@@ -363,7 +363,7 @@ vless://7f3c2d1a-8b4e-4f9a-9c2d-1e3f5a7b8c9d@s5c.cc.cd:443?encryption=none&secur
        */
       const CONFIG = {
         SALT: "MY_SECRET_2026", // 修改此处作为你的私钥
-        wechat: "your_wechat_id",
+        wechat: "xiancctv10",
       };
 
       const $ = (s) => document.querySelector(s);
