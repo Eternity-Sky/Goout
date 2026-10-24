@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Goout - 订阅中心</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background-color: #000; color: #fff; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+  .glass { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); }
+  .input-focus:focus { outline: none; border-color: rgba(255, 255, 255, 0.3); }
+  .btn-white { background: #fff; color: #000; transition: all 0.2s; }
+  .btn-white:hover { background: #e5e5e5; transform: translateY(-1px); }
+  .text-secondary { color: rgba(255, 255, 255, 0.5); }
+</style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-8 sm:p-20">
+
+<div class="w-full max-w-2xl space-y-16">
+  
+  <!-- Logo & 状态 -->
+  <div class="flex flex-col items-center text-center space-y-4">
+    <h1 class="text-5xl sm:text-7xl font-bold tracking-tighter italic">GOOUT</h1>
+    <div class="flex items-center gap-2 text-xs tracking-widest text-emerald-500 font-mono">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      SYSTEM_ONLINE
+    </div>
+  </div>
+
+  <!-- 核心交互区 -->
+  <main class="space-y-12">
+    
+    <!-- 未激活状态：购买与输入 -->
+    <div id="authView" class="space-y-12">
+      <!-- 付款卡片 -->
+      <div class="glass rounded-3xl p-10 sm:p-14 text-center space-y-8">
+        <div class="space-y-2">
+          <h2 class="text-3xl font-medium">高速节点订阅</h2>
+          <p class="text-secondary text-lg">¥20 / 30 Days</p>
+        </div>
+
+        <!-- 收款码区域 -->
+        <div class="w-64 h-64 mx-auto glass rounded-2xl flex items-center justify-center border-dashed border-2 border-white/10 relative group">
+          <span class="text-sm text-secondary group-hover:text-white transition-colors">请在此处替换<br>收款二维码</span>
+          <!-- <img src="your-qr-code.png" class="absolute inset-0 w-full h-full object-contain p-4"> -->
+        </div>
+
+        <div class="space-y-4 pt-4">
+          <p class="text-secondary text-sm">1. 扫码支付后截取凭证</p>
+          <p class="text-secondary text-sm">2. 添加微信发送截图: <b class="text-white cursor-pointer hover:underline" onclick="copyText('your_wechat_id', '微信号已复制')">your_wechat_id</b></p>
+        </div>
+      </div>
+
+      <!-- 激活输入框 -->
+      <div class="flex flex-col sm:flex-row gap-4">
+        <input id="codeInput" type="text" placeholder="输入客服发放的兑换码" 
+          class="flex-1 bg-white/[0.05] border border-white/10 rounded-2xl px-8 py-6 text-xl input-focus transition-all text-center sm:text-left">
+        <button id="redeemBtn" class="btn-white px-10 py-6 rounded-2xl text-xl font-bold">激活</button>
+      </div>
+      <p id="redeemMsg" class="text-center text-sm font-mono hidden"></p>
+    </div>
+
+    <!-- 已激活状态：节点信息 -->
+    <div id="nodeView" class="hidden space-y-8">
+      <div class="glass rounded-3xl p-10 sm:p-14 space-y-10">
+        <div class="flex justify-between items-end border-b border-white/10 pb-6">
+          <h2 class="text-2xl font-medium">已激活节点</h2>
+          <button onclick="logout()" class="text-xs text-secondary hover:text-white underline underline-offset-4">退出</button>
+        </div>
+
+        <!-- 节点参数 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 font-mono">
+          <div class="space-y-1">
+            <span class="text-xs text-secondary uppercase tracking-widest">Location</span>
+            <p class="text-lg">🇳🇱 Amsterdam, Netherlands</p>
+          </div>
+          <div class="space-y-1">
+            <span class="text-xs text-secondary uppercase tracking-widest">Security</span>
+            <p class="text-lg">TLS + WebSocket</p>
+          </div>
+          <div class="space-y-1">
+            <span class="text-xs text-secondary uppercase tracking-widest">Cleanliness</span>
+            <p class="text-lg text-emerald-400">23% (Excellent)</p>
+          </div>
+          <div class="space-y-1">
+            <span class="text-xs text-secondary uppercase tracking-widest">Provider</span>
+            <p class="text-lg">Cloudflare CDN</p>
+          </div>
+        </div>
+
+        <!-- 链接区 -->
+        <div class="space-y-4 pt-4">
+          <span class="text-xs text-secondary uppercase tracking-widest">VLESS URL</span>
+          <div class="relative group">
+            <textarea id="nodeUrl" readonly 
+              class="w-full h-32 bg-black/50 border border-white/10 rounded-2xl p-6 text-xs text-secondary font-mono resize-none leading-relaxed">vless://7f3c2d1a-8b4e-4f9a-9c2d-1e3f5a7b8c9d@s5c.cc.cd:443?encryption=none&security=tls&sni=s5c.cc.cd&fp=random&insecure=0&allowInsecure=0&type=ws&host=s5c.cc.cd&path=%2F%3Fed%3D2048#ProxyIP</textarea>
+            <button onclick="copyNode()" 
+              class="absolute top-4 right-4 glass text-[10px] px-4 py-2 rounded-full hover:bg-white/10 transition">复制链接</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 页脚 -->
+  <footer class="text-center space-y-4">
+    <p class="text-secondary text-xs leading-relaxed max-w-md mx-auto">
+      本服务仅供学习与科研使用，请严格遵守当地法律法规。
+    </p>
+    <p class="text-[10px] tracking-tighter text-white/20">GOOUT-V1.0-STABLE</p>
+  </footer>
+
+</div>
+
+<!-- 全局提示 -->
+<div id="toast" class="fixed bottom-12 left-1/2 -translate-x-1/2 bg-white text-black text-xs px-6 py-3 rounded-full font-bold opacity-0 transition-all duration-300 pointer-events-none z-50"></div>
+
+<script>
+/**
+ * ==========================================
+ * 兑换码管理说明：
+ * 1. 在下方的 codes 数组中添加你的兑换码。
+ * 2. 只有在此数组中的兑换码才能激活成功。
+ * 3. 兑换码不区分大小写。
+ * ==========================================
+ */
+const CONFIG = {
+  // 你的兑换码清单（直接在这里增删改）
+  codes: [
+    'GOOUT2026',
+    'VIP888',
+    'TEST999'
+  ],
+  wechat: 'your_wechat_id'
+};
+
+const $ = (s) => document.querySelector(s);
+const STORAGE_KEY = 'goout_session';
+
+function copyText(text, successMsg = '已复制') {
+  navigator.clipboard.writeText(text);
+  showToast(successMsg);
+}
+
+function showToast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  t.style.transform = 'translate(-50%, -10px)';
+  setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translate(-50%, 0)';
+  }, 2000);
+}
+
+function copyNode() {
+  const url = $('#nodeUrl').value;
+  copyText(url, '链接已复制到剪贴板');
+}
+
+function unlock() {
+  $('#authView').classList.add('hidden');
+  $('#nodeView').classList.remove('hidden');
+}
+
+function logout() {
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+}
+
+$('#redeemBtn').addEventListener('click', () => {
+  const input = $('#codeInput').value.trim().toUpperCase();
+  const msg = $('#redeemMsg');
+  
+  if (!input) {
+    showToast('请输入兑换码');
+    return;
+  }
+
+  // 纯静态核实逻辑：匹配本地数组
+  if (CONFIG.codes.map(c => c.toUpperCase()).includes(input)) {
+    localStorage.setItem(STORAGE_KEY, 'active');
+    msg.textContent = '激活成功';
+    msg.className = 'text-center text-sm font-mono text-emerald-500';
+    msg.classList.remove('hidden');
+    setTimeout(unlock, 800);
+  } else {
+    msg.textContent = '无效的兑换码，请联系客服';
+    msg.className = 'text-center text-sm font-mono text-rose-500';
+    msg.classList.remove('hidden');
+  }
+});
+
+// 初始化检查
+if (localStorage.getItem(STORAGE_KEY)) {
+  unlock();
+}
+</script>
+</body>
+</html>
