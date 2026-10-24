@@ -1,246 +1,483 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Goout - 订阅中心</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-  body { background-color: #000; color: #fff; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
-  .glass { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); }
-  .input-focus:focus { outline: none; border-color: rgba(255, 255, 255, 0.3); }
-  .btn-white { background: #fff; color: #000; transition: all 0.2s; }
-  .btn-white:hover { background: #e5e5e5; transform: translateY(-1px); }
-  .text-secondary { color: rgba(255, 255, 255, 0.5); }
-</style>
-</head>
-<body class="min-h-screen flex flex-col items-center justify-center p-5 sm:p-20 overflow-x-hidden">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Goout - 订阅中心</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        background-color: #000;
+        color: #fff;
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          sans-serif;
+      }
+      .glass {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .input-focus:focus {
+        outline: none;
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+      .btn-white {
+        background: #fff;
+        color: #000;
+        transition: all 0.2s;
+      }
+      .btn-white:hover {
+        background: #e5e5e5;
+        transform: translateY(-1px);
+      }
+      .text-secondary {
+        color: rgba(255, 255, 255, 0.5);
+      }
 
-<div class="w-full max-w-2xl space-y-12 sm:space-y-16">
-  
-  <!-- Logo & 状态 -->
-  <div class="flex flex-col items-center text-center space-y-4">
-    <h1 class="text-5xl sm:text-7xl font-bold tracking-tighter italic">GOOUT</h1>
-    <div class="flex items-center gap-2 text-xs tracking-widest text-emerald-500 font-mono">
-      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-      SYSTEM_ONLINE
-    </div>
-  </div>
-
-  <!-- 核心交互区 -->
-  <main class="space-y-12">
-    
-    <!-- 未激活状态：购买与输入 -->
-    <div id="authView" class="space-y-12">
-      <!-- 付款卡片 -->
-      <div class="glass rounded-3xl p-6 sm:p-14 text-center space-y-8">
-        <div class="space-y-2">
-          <h2 class="text-2xl sm:text-3xl font-medium">高速节点订阅</h2>
-          <p class="text-secondary text-lg">¥9.9 / Lifetime</p>
-        </div>
-
-        <!-- 收款码区域 -->
-        <div class="w-52 h-52 sm:w-64 sm:h-64 mx-auto glass rounded-2xl flex items-center justify-center border-dashed border-2 border-white/10 relative group">
-          <span class="text-sm text-secondary group-hover:text-white transition-colors">请在此处替换<br>收款二维码</span>
-          <!-- <img src="your-qr-code.png" class="absolute inset-0 w-full h-full object-contain p-4"> -->
-        </div>
-
-        <div class="space-y-4 pt-4">
-          <p class="text-secondary text-sm">1. 扫码支付后截取凭证</p>
-          <p class="text-secondary text-sm">2. 添加微信发送截图: <b class="text-white cursor-pointer hover:underline" onclick="copyText('your_wechat_id', '微信号已复制')">your_wechat_id</b></p>
+      /* Face ID 解锁动画 */
+      #faceid {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+      }
+      #faceid.show {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      #faceid .bracket {
+        stroke: rgba(255, 255, 255, 0.85);
+        transition: stroke 0.3s ease;
+      }
+      #faceid .scan-line {
+        animation: scanSweep 1s ease-in-out infinite;
+      }
+      @keyframes scanSweep {
+        0% {
+          transform: translateY(-22px);
+          opacity: 0;
+        }
+        15% {
+          opacity: 1;
+        }
+        85% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(22px);
+          opacity: 0;
+        }
+      }
+      #faceid .face-part {
+        transition: opacity 0.2s ease;
+      }
+      #faceid.success .face-part {
+        opacity: 0;
+      }
+      #faceid .check-path {
+        stroke-dasharray: 62;
+        stroke-dashoffset: 62;
+      }
+      #faceid.success .check-path {
+        animation: drawCheck 0.45s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+      }
+      @keyframes drawCheck {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+      #faceid.success .bracket {
+        stroke: #10b981;
+      }
+      #faceid.success .face-box {
+        animation: facePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      @keyframes facePop {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+    </style>
+  </head>
+  <body
+    class="min-h-screen flex flex-col items-center justify-center p-5 sm:p-20 overflow-x-hidden"
+  >
+    <div class="w-full max-w-2xl space-y-12 sm:space-y-16">
+      <!-- Logo & 状态 -->
+      <div class="flex flex-col items-center text-center space-y-4">
+        <h1 class="text-5xl sm:text-7xl font-bold tracking-tighter italic">
+          GOOUT
+        </h1>
+        <div
+          class="flex items-center gap-2 text-xs tracking-widest text-emerald-500 font-mono"
+        >
+          <span
+            class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"
+          ></span>
+          SYSTEM_ONLINE
         </div>
       </div>
 
-      <!-- 激活输入框 -->
-      <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
-        <input id="codeInput" type="text" placeholder="输入客服发放的兑换码" 
-          class="flex-1 bg-white/[0.05] border border-white/10 rounded-2xl px-6 py-5 sm:px-8 sm:py-6 text-base sm:text-xl input-focus transition-all text-center sm:text-left font-mono">
-        <button id="redeemBtn" class="btn-white px-10 py-5 sm:py-6 rounded-2xl text-lg sm:text-xl font-bold">激活</button>
-      </div>
-      <p id="redeemMsg" class="text-center text-sm font-mono hidden"></p>
-    </div>
+      <!-- 核心交互区 -->
+      <main class="space-y-12">
+        <!-- 未激活状态：购买与输入 -->
+        <div id="authView" class="space-y-12">
+          <!-- 付款卡片 -->
+          <div class="glass rounded-3xl p-6 sm:p-14 text-center space-y-8">
+            <div class="space-y-2">
+              <h2 class="text-2xl sm:text-3xl font-medium">高速节点订阅</h2>
+              <p class="text-secondary text-lg">¥9.9 / Lifetime</p>
+            </div>
 
-    <!-- 已激活状态：节点信息 -->
-    <div id="nodeView" class="hidden space-y-8">
-      <div class="glass rounded-3xl p-6 sm:p-14 space-y-8 sm:space-y-10">
-        <div class="flex justify-between items-end border-b border-white/10 pb-6">
-          <h2 class="text-xl sm:text-2xl font-medium">已激活节点</h2>
-          <button onclick="logout()" class="text-xs text-secondary hover:text-white underline underline-offset-4">退出</button>
-        </div>
+            <!-- 收款码区域 -->
+            <div
+              class="w-52 h-52 sm:w-64 sm:h-64 mx-auto glass rounded-2xl flex items-center justify-center border-dashed border-2 border-white/10 relative group"
+            >
+              <span
+                class="text-sm text-secondary group-hover:text-white transition-colors"
+                >请在此处替换<br />收款二维码</span
+              >
+              <!-- <img src="your-qr-code.png" class="absolute inset-0 w-full h-full object-contain p-4"> -->
+            </div>
 
-        <!-- 节点信息 -->
-        <div class="rounded-2xl overflow-hidden border border-white/10">
-          <img src="https://picui.ogmua.cn/s1/2026/10/24/6adc990b06f29.webp" 
-            alt="节点信息" class="w-full h-auto block">
-        </div>
-
-        <!-- 链接区 -->
-        <div class="space-y-4 pt-4">
-          <span class="text-xs text-secondary uppercase tracking-widest">VLESS URL</span>
-          <div class="relative group">
-            <textarea id="nodeUrl" readonly 
-              class="w-full h-40 sm:h-32 bg-black/50 border border-white/10 rounded-2xl p-5 sm:p-6 pb-14 sm:pb-6 text-[11px] sm:text-xs text-secondary font-mono resize-none leading-relaxed break-all">vless://7f3c2d1a-8b4e-4f9a-9c2d-1e3f5a7b8c9d@s5c.cc.cd:443?encryption=none&security=tls&sni=s5c.cc.cd&fp=random&insecure=0&allowInsecure=0&type=ws&host=s5c.cc.cd&path=%2F%3Fed%3D2048#ProxyIP</textarea>
-            <button onclick="copyNode()" 
-              class="absolute bottom-4 left-5 sm:top-4 sm:right-4 sm:left-auto sm:bottom-auto glass text-[10px] px-4 py-2 rounded-full hover:bg-white/10 transition">复制链接</button>
+            <div class="space-y-4 pt-4">
+              <p class="text-secondary text-sm">1. 扫码支付后截取凭证</p>
+              <p class="text-secondary text-sm">
+                2. 添加微信发送截图:
+                <b
+                  class="text-white cursor-pointer hover:underline"
+                  onclick="copyText('your_wechat_id', '微信号已复制')"
+                  >your_wechat_id</b
+                >
+              </p>
+            </div>
           </div>
+
+          <!-- 激活输入框 -->
+          <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <input
+              id="codeInput"
+              type="text"
+              placeholder="输入客服发放的兑换码"
+              class="flex-1 bg-white/[0.05] border border-white/10 rounded-2xl px-6 py-5 sm:px-8 sm:py-6 text-base sm:text-xl input-focus transition-all text-center sm:text-left font-mono"
+            />
+            <button
+              id="redeemBtn"
+              class="btn-white px-10 py-5 sm:py-6 rounded-2xl text-lg sm:text-xl font-bold"
+            >
+              激活
+            </button>
+          </div>
+          <p id="redeemMsg" class="text-center text-sm font-mono hidden"></p>
         </div>
 
-        <!-- 下载区 -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-          <a href="https://v2rayng.2dust.link/v2rayNG_2.2.6_arm64-v8a.apk" class="glass rounded-2xl p-4 flex items-center justify-between hover:bg-white/5 transition group">
-            <div class="flex items-center gap-3">
-              <span class="text-lg">🤖</span>
-              <div class="text-left">
-                <p class="text-xs font-bold uppercase tracking-widest">Android APK</p>
-                <p class="text-[10px] text-secondary">v2rayNG 2.2.6</p>
+        <!-- 已激活状态：节点信息 -->
+        <div id="nodeView" class="hidden space-y-8">
+          <div class="glass rounded-3xl p-6 sm:p-14 space-y-8 sm:space-y-10">
+            <div
+              class="flex justify-between items-end border-b border-white/10 pb-6"
+            >
+              <h2 class="text-xl sm:text-2xl font-medium">已激活节点</h2>
+              <button
+                onclick="logout()"
+                class="text-xs text-secondary hover:text-white underline underline-offset-4"
+              >
+                退出
+              </button>
+            </div>
+
+            <!-- 节点信息 -->
+            <div class="rounded-2xl overflow-hidden border border-white/10">
+              <img
+                src="https://picui.ogmua.cn/s1/2026/10/24/6adc990b06f29.webp"
+                alt="节点信息"
+                class="w-full h-auto block"
+              />
+            </div>
+
+            <!-- 链接区 -->
+            <div class="space-y-4 pt-4">
+              <span class="text-xs text-secondary uppercase tracking-widest"
+                >VLESS URL</span
+              >
+              <div class="relative group">
+                <textarea
+                  id="nodeUrl"
+                  readonly
+                  class="w-full h-40 sm:h-32 bg-black/50 border border-white/10 rounded-2xl p-5 sm:p-6 pb-14 sm:pb-6 text-[11px] sm:text-xs text-secondary font-mono resize-none leading-relaxed break-all"
+                >
+vless://7f3c2d1a-8b4e-4f9a-9c2d-1e3f5a7b8c9d@s5c.cc.cd:443?encryption=none&security=tls&sni=s5c.cc.cd&fp=random&insecure=0&allowInsecure=0&type=ws&host=s5c.cc.cd&path=%2F%3Fed%3D2048#ProxyIP</textarea
+                >
+                <button
+                  onclick="copyNode()"
+                  class="absolute bottom-4 left-5 sm:top-4 sm:right-4 sm:left-auto sm:bottom-auto glass text-[10px] px-4 py-2 rounded-full hover:bg-white/10 transition"
+                >
+                  复制链接
+                </button>
               </div>
             </div>
-            <span class="text-xs text-secondary group-hover:text-white">下载 →</span>
-          </a>
-          <a href="https://v2rayn.2dust.link/v2rayN-windows-64.zip" class="glass rounded-2xl p-4 flex items-center justify-between hover:bg-white/5 transition group">
-            <div class="flex items-center gap-3">
-              <span class="text-lg">💻</span>
-              <div class="text-left">
-                <p class="text-xs font-bold uppercase tracking-widest">Windows PC</p>
-                <p class="text-[10px] text-secondary">v2rayN 64-bit</p>
+
+            <!-- 下载区 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+              <a
+                href="https://v2rayng.2dust.link/v2rayNG_2.2.6_arm64-v8a.apk"
+                class="glass rounded-2xl p-4 flex items-center justify-between hover:bg-white/5 transition group"
+              >
+                <div class="flex items-center gap-3">
+                  <span class="text-lg">🤖</span>
+                  <div class="text-left">
+                    <p class="text-xs font-bold uppercase tracking-widest">
+                      Android APK
+                    </p>
+                    <p class="text-[10px] text-secondary">v2rayNG 2.2.6</p>
+                  </div>
+                </div>
+                <span class="text-xs text-secondary group-hover:text-white"
+                  >下载 →</span
+                >
+              </a>
+              <a
+                href="https://v2rayn.2dust.link/v2rayN-windows-64.zip"
+                class="glass rounded-2xl p-4 flex items-center justify-between hover:bg-white/5 transition group"
+              >
+                <div class="flex items-center gap-3">
+                  <span class="text-lg">💻</span>
+                  <div class="text-left">
+                    <p class="text-xs font-bold uppercase tracking-widest">
+                      Windows PC
+                    </p>
+                    <p class="text-[10px] text-secondary">v2rayN 64-bit</p>
+                  </div>
+                </div>
+                <span class="text-xs text-secondary group-hover:text-white"
+                  >下载 →</span
+                >
+              </a>
+            </div>
+
+            <!-- 极简教程 -->
+            <div
+              class="bg-white/[0.02] border border-white/5 rounded-2xl p-6 space-y-4"
+            >
+              <span class="text-[10px] text-white/40 uppercase tracking-widest"
+                >Quick Start Guide / 快速上手</span
+              >
+              <div
+                class="grid grid-cols-1 gap-3 text-[11px] text-secondary leading-relaxed font-mono"
+              >
+                <p>1. 复制上方的 <span class="text-white">VLESS URL</span></p>
+                <p>2. 安装对应的 <span class="text-white">客户端 APP</span></p>
+                <p>
+                  3. 打开 APP，点击右上角
+                  <span class="text-white">「+」</span> 加号
+                </p>
+                <p>
+                  4. 选择
+                  <span class="text-white">「从剪贴板导入」</span> 即可开始使用
+                </p>
               </div>
             </div>
-            <span class="text-xs text-secondary group-hover:text-white">下载 →</span>
-          </a>
-        </div>
-
-        <!-- 极简教程 -->
-        <div class="bg-white/[0.02] border border-white/5 rounded-2xl p-6 space-y-4">
-          <span class="text-[10px] text-white/40 uppercase tracking-widest">Quick Start Guide / 快速上手</span>
-          <div class="grid grid-cols-1 gap-3 text-[11px] text-secondary leading-relaxed font-mono">
-            <p>1. 复制上方的 <span class="text-white">VLESS URL</span></p>
-            <p>2. 安装对应的 <span class="text-white">客户端 APP</span></p>
-            <p>3. 打开 APP，点击右上角 <span class="text-white">「+」</span> 加号</p>
-            <p>4. 选择 <span class="text-white">「从剪贴板导入」</span> 即可开始使用</p>
           </div>
         </div>
+      </main>
+
+      <!-- 页脚 -->
+      <footer class="text-center space-y-4">
+        <p class="text-secondary text-xs leading-relaxed max-w-md mx-auto">
+          本服务仅供学习与科研使用，请严格遵守当地法律法规。
+        </p>
+        <p class="text-[10px] tracking-tighter text-white/20">
+          GOOUT-V1.0-STABLE
+        </p>
+      </footer>
+    </div>
+
+    <!-- Face ID 解锁动画 -->
+    <div
+      id="faceid"
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-black"
+    >
+      <div class="face-box w-32 h-32 sm:w-40 sm:h-40 text-white">
+        <svg
+          class="w-full h-full"
+          viewBox="0 0 100 100"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="4"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <!-- 四角边框 -->
+          <path class="bracket" d="M10 34 V20 A10 10 0 0 1 20 10 H34" />
+          <path class="bracket" d="M66 10 H80 A10 10 0 0 1 90 20 V34" />
+          <path class="bracket" d="M90 66 V80 A10 10 0 0 1 80 90 H66" />
+          <path class="bracket" d="M34 90 H20 A10 10 0 0 1 10 80 V66" />
+          <!-- 面部轮廓 -->
+          <g class="face-part">
+            <path d="M34 38 V46" />
+            <path d="M66 38 V46" />
+            <path d="M50 38 V54" />
+            <path d="M36 66 Q50 76 64 66" />
+            <line
+              class="scan-line"
+              x1="20"
+              y1="50"
+              x2="80"
+              y2="50"
+              stroke="rgba(255,255,255,0.9)"
+              stroke-width="2.5"
+            />
+          </g>
+          <!-- 对勾 -->
+          <path
+            class="check-path"
+            d="M30 52 L44 66 L72 36"
+            stroke="#10b981"
+            stroke-width="6"
+          />
+        </svg>
       </div>
     </div>
-  </main>
 
-  <!-- 页脚 -->
-  <footer class="text-center space-y-4">
-    <p class="text-secondary text-xs leading-relaxed max-w-md mx-auto">
-      本服务仅供学习与科研使用，请严格遵守当地法律法规。
-    </p>
-    <p class="text-[10px] tracking-tighter text-white/20">GOOUT-V1.0-STABLE</p>
-  </footer>
+    <!-- 全局提示 -->
+    <div
+      id="toast"
+      class="fixed bottom-12 left-1/2 -translate-x-1/2 bg-white text-black text-xs px-6 py-3 rounded-full font-bold opacity-0 transition-all duration-300 pointer-events-none z-50"
+    ></div>
 
-</div>
+    <script>
+      /**
+       * ==========================================
+       * 兑换码校验逻辑：
+       * 1. 采用算法校验，Key 格式为: GOOUT-XXXX-YYYY
+       * 2. XXXX 为 4 位随机字符，YYYY 为基于 XXXX+SALT 生成的校验码。
+       * 3. 私钥 (SALT) 决定了 Key 是否有效，修改 SALT 会使之前所有 Key 失效。
+       * ==========================================
+       */
+      const CONFIG = {
+        SALT: "MY_SECRET_2026", // 修改此处作为你的私钥
+        wechat: "your_wechat_id",
+      };
 
-<!-- 全局提示 -->
-<div id="toast" class="fixed bottom-12 left-1/2 -translate-x-1/2 bg-white text-black text-xs px-6 py-3 rounded-full font-bold opacity-0 transition-all duration-300 pointer-events-none z-50"></div>
+      const $ = (s) => document.querySelector(s);
+      const STORAGE_KEY = "goout_session";
 
-<script>
-/**
- * ==========================================
- * 兑换码校验逻辑：
- * 1. 采用算法校验，Key 格式为: GOOUT-XXXX-YYYY
- * 2. XXXX 为 4 位随机字符，YYYY 为基于 XXXX+SALT 生成的校验码。
- * 3. 私钥 (SALT) 决定了 Key 是否有效，修改 SALT 会使之前所有 Key 失效。
- * ==========================================
- */
-const CONFIG = {
-  SALT: 'MY_SECRET_2026', // 修改此处作为你的私钥
-  wechat: 'your_wechat_id'
-};
+      // 哈希生成函数
+      async function getChecksum(input) {
+        const msgUint8 = new TextEncoder().encode(
+          input.toUpperCase() + CONFIG.SALT,
+        );
+        const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        // 取前 6 个字节转为 12 位 16 进制字符串，强度大幅提升
+        return hashArray
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("")
+          .slice(0, 12)
+          .toUpperCase();
+      }
 
-const $ = (s) => document.querySelector(s);
-const STORAGE_KEY = 'goout_session';
+      function copyText(text, successMsg = "已复制") {
+        navigator.clipboard.writeText(text);
+        showToast(successMsg);
+      }
 
-// 哈希生成函数
-async function getChecksum(input) {
-  const msgUint8 = new TextEncoder().encode(input.toUpperCase() + CONFIG.SALT);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  // 取前 6 个字节转为 12 位 16 进制字符串，强度大幅提升
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 12).toUpperCase();
-}
+      function showToast(msg) {
+        const t = $("#toast");
+        t.textContent = msg;
+        t.style.opacity = "1";
+        t.style.transform = "translate(-50%, -10px)";
+        setTimeout(() => {
+          t.style.opacity = "0";
+          t.style.transform = "translate(-50%, 0)";
+        }, 2000);
+      }
 
-function copyText(text, successMsg = '已复制') {
-  navigator.clipboard.writeText(text);
-  showToast(successMsg);
-}
+      function copyNode() {
+        const url = $("#nodeUrl").value;
+        copyText(url, "链接已复制到剪贴板");
+      }
 
-function showToast(msg) {
-  const t = $('#toast');
-  t.textContent = msg;
-  t.style.opacity = '1';
-  t.style.transform = 'translate(-50%, -10px)';
-  setTimeout(() => {
-    t.style.opacity = '0';
-    t.style.transform = 'translate(-50%, 0)';
-  }, 2000);
-}
+      function unlock() {
+        $("#authView").classList.add("hidden");
+        $("#nodeView").classList.remove("hidden");
+      }
 
-function copyNode() {
-  const url = $('#nodeUrl').value;
-  copyText(url, '链接已复制到剪贴板');
-}
+      // Face ID 解锁动画
+      function playFaceID() {
+        return new Promise((resolve) => {
+          const el = $("#faceid");
+          el.classList.remove("success");
+          el.classList.add("show");
+          setTimeout(() => el.classList.add("success"), 900);
+          setTimeout(() => {
+            el.classList.remove("show");
+            resolve();
+          }, 1750);
+        });
+      }
 
-function unlock() {
-  $('#authView').classList.add('hidden');
-  $('#nodeView').classList.remove('hidden');
-}
+      function logout() {
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+      }
 
-function logout() {
-  localStorage.removeItem(STORAGE_KEY);
-  location.reload();
-}
+      $("#redeemBtn").addEventListener("click", async () => {
+        const input = $("#codeInput").value.trim().toUpperCase();
+        const msg = $("#redeemMsg");
 
-$('#redeemBtn').addEventListener('click', async () => {
-  const input = $('#codeInput').value.trim().toUpperCase();
-  const msg = $('#redeemMsg');
-  
-  if (!input) {
-    showToast('请输入兑换码');
-    return;
-  }
+        if (!input) {
+          showToast("请输入兑换码");
+          return;
+        }
 
-  const parts = input.split('-');
-  if (parts.length !== 3 || parts[0] !== 'GOOUT') {
-    msg.textContent = '格式错误 (例: GOOUT-A1B2-C3D4)';
-    msg.className = 'text-center text-sm font-mono text-rose-500';
-    msg.classList.remove('hidden');
-    return;
-  }
+        const parts = input.split("-");
+        if (parts.length !== 3 || parts[0] !== "GOOUT") {
+          msg.textContent = "格式错误 (例: GOOUT-A1B2-C3D4)";
+          msg.className = "text-center text-sm font-mono text-rose-500";
+          msg.classList.remove("hidden");
+          return;
+        }
 
-  const randomPart = parts[1];
-  const userChecksum = parts[2];
-  const validChecksum = await getChecksum(randomPart);
+        const randomPart = parts[1];
+        const userChecksum = parts[2];
+        const validChecksum = await getChecksum(randomPart);
 
-  if (userChecksum === validChecksum) {
-    localStorage.setItem(STORAGE_KEY, 'active');
-    
-    msg.textContent = '激活成功';
-    msg.className = 'text-center text-sm font-mono text-emerald-500';
-    msg.classList.remove('hidden');
-    setTimeout(unlock, 800);
-  } else {
-    msg.textContent = '无效的兑换码，请核对或联系客服';
-    msg.className = 'text-center text-sm font-mono text-rose-500';
-    msg.classList.remove('hidden');
-  }
-});
+        if (userChecksum === validChecksum) {
+          localStorage.setItem(STORAGE_KEY, "active");
 
-/**
- * 开发者工具：生成 Key
- * 在控制台输入: genKey('A1B2') 即可得到 GOOUT-A1B2-xxxx
- */
-window.genKey = async (prefix) => {
-  const cs = await getChecksum(prefix.toUpperCase());
-  console.log(`生成成功: GOOUT-${prefix.toUpperCase()}-${cs}`);
-};
+          msg.textContent = "激活成功";
+          msg.className = "text-center text-sm font-mono text-emerald-500";
+          msg.classList.remove("hidden");
+          await playFaceID();
+          unlock();
+        } else {
+          msg.textContent = "无效的兑换码，请核对或联系客服";
+          msg.className = "text-center text-sm font-mono text-rose-500";
+          msg.classList.remove("hidden");
+        }
+      });
 
-// 初始化检查
-if (localStorage.getItem(STORAGE_KEY)) {
-  unlock();
-}
-</script>
-</body>
+      /**
+       * 开发者工具：生成 Key
+       * 在控制台输入: genKey('A1B2') 即可得到 GOOUT-A1B2-xxxx
+       */
+      window.genKey = async (prefix) => {
+        const cs = await getChecksum(prefix.toUpperCase());
+        console.log(`生成成功: GOOUT-${prefix.toUpperCase()}-${cs}`);
+      };
+
+      // 初始化检查
+      if (localStorage.getItem(STORAGE_KEY)) {
+        unlock();
+      }
+    </script>
+  </body>
 </html>
