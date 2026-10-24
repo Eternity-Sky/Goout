@@ -134,10 +134,11 @@ const STORAGE_KEY = 'goout_session';
 
 // 哈希生成函数
 async function getChecksum(input) {
-  const msgUint8 = new TextEncoder().encode(input + CONFIG.SALT);
+  const msgUint8 = new TextEncoder().encode(input.toUpperCase() + CONFIG.SALT);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 4).toUpperCase();
+  // 取前 6 个字节转为 12 位 16 进制字符串，强度大幅提升
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 12).toUpperCase();
 }
 
 function copyText(text, successMsg = '已复制') {
