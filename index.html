@@ -194,17 +194,6 @@ $('#redeemBtn').addEventListener('click', async () => {
   const validChecksum = await getChecksum(randomPart);
 
   if (userChecksum === validChecksum) {
-    // 检查是否在当前浏览器使用过
-    const usedKeys = JSON.parse(localStorage.getItem('goout_used') || '[]');
-    if (usedKeys.includes(input)) {
-      msg.textContent = '该兑换码已在本设备使用过';
-      msg.className = 'text-center text-sm font-mono text-rose-500';
-      msg.classList.remove('hidden');
-      return;
-    }
-
-    usedKeys.push(input);
-    localStorage.setItem('goout_used', JSON.stringify(usedKeys));
     localStorage.setItem(STORAGE_KEY, 'active');
     
     msg.textContent = '激活成功';
