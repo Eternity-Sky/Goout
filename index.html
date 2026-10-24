@@ -118,24 +118,27 @@
 <script>
 /**
  * ==========================================
- * 兑换码管理说明：
- * 1. 在下方的 codes 数组中添加你的兑换码。
- * 2. 只有在此数组中的兑换码才能激活成功。
- * 3. 兑换码不区分大小写。
+ * 兑换码校验逻辑：
+ * 1. 采用算法校验，Key 格式为: GOOUT-XXXX-YYYY
+ * 2. XXXX 为 4 位随机字符，YYYY 为基于 XXXX+SALT 生成的校验码。
+ * 3. 私钥 (SALT) 决定了 Key 是否有效，修改 SALT 会使之前所有 Key 失效。
  * ==========================================
  */
 const CONFIG = {
-  // 你的兑换码清单（直接在这里增删改）
-  codes: [
-    'GOOUT2026',
-    'VIP888',
-    'TEST999'
-  ],
+  SALT: 'MY_SECRET_2026', // 修改此处作为你的私钥
   wechat: 'your_wechat_id'
 };
 
 const $ = (s) => document.querySelector(s);
 const STORAGE_KEY = 'goout_session';
+
+// 哈希生成函数
+async function getChecksum(input) {
+  const msgUint8 = new TextEncoder().encode(input + CONFIG.SALT);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 4).toUpperCase();
+}
 
 function copyText(text, successMsg = '已复制') {
   navigator.clipboard.writeText(text);
@@ -168,7 +171,7 @@ function logout() {
   location.reload();
 }
 
-$('#redeemBtn').addEventListener('click', () => {
+$('#redeemBtn').addEventListener('click', async () => {
   const input = $('#codeInput').value.trim().toUpperCase();
   const msg = $('#redeemMsg');
   
@@ -177,19 +180,51 @@ $('#redeemBtn').addEventListener('click', () => {
     return;
   }
 
-  // 纯静态核实逻辑：匹配本地数组
-  if (CONFIG.codes.map(c => c.toUpperCase()).includes(input)) {
+  const parts = input.split('-');
+  if (parts.length !== 3 || parts[0] !== 'GOOUT') {
+    msg.textContent = '格式错误 (例: GOOUT-A1B2-C3D4)';
+    msg.className = 'text-center text-sm font-mono text-rose-500';
+    msg.classList.remove('hidden');
+    return;
+  }
+
+  const randomPart = parts[1];
+  const userChecksum = parts[2];
+  const validChecksum = await getChecksum(randomPart);
+
+  if (userChecksum === validChecksum) {
+    // 检查是否在当前浏览器使用过
+    const usedKeys = JSON.parse(localStorage.getItem('goout_used') || '[]');
+    if (usedKeys.includes(input)) {
+      msg.textContent = '该兑换码已在本设备使用过';
+      msg.className = 'text-center text-sm font-mono text-rose-500';
+      msg.classList.remove('hidden');
+      return;
+    }
+
+    usedKeys.push(input);
+    localStorage.setItem('goout_used', JSON.stringify(usedKeys));
     localStorage.setItem(STORAGE_KEY, 'active');
+    
     msg.textContent = '激活成功';
     msg.className = 'text-center text-sm font-mono text-emerald-500';
     msg.classList.remove('hidden');
     setTimeout(unlock, 800);
   } else {
-    msg.textContent = '无效的兑换码，请联系客服';
+    msg.textContent = '无效的兑换码，请核对或联系客服';
     msg.className = 'text-center text-sm font-mono text-rose-500';
     msg.classList.remove('hidden');
   }
 });
+
+/**
+ * 开发者工具：生成 Key
+ * 在控制台输入: genKey('A1B2') 即可得到 GOOUT-A1B2-xxxx
+ */
+window.genKey = async (prefix) => {
+  const cs = await getChecksum(prefix.toUpperCase());
+  console.log(`生成成功: GOOUT-${prefix.toUpperCase()}-${cs}`);
+};
 
 // 初始化检查
 if (localStorage.getItem(STORAGE_KEY)) {
