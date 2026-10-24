@@ -104,6 +104,22 @@
           transform: scale(1);
         }
       }
+
+      /* 首页效果轮播 */
+      .carousel-slide {
+        opacity: 0;
+        transition: opacity 0.8s ease;
+      }
+      .carousel-slide.active {
+        opacity: 1;
+      }
+      .carousel-dot {
+        transition: all 0.3s ease;
+      }
+      .carousel-dot.active {
+        background: #fff;
+        width: 1.5rem;
+      }
     </style>
   </head>
   <body
@@ -129,6 +145,42 @@
       <main class="space-y-12">
         <!-- 未激活状态：购买与输入 -->
         <div id="authView" class="space-y-12">
+          <!-- 效果轮播图 -->
+          <div class="glass rounded-3xl overflow-hidden">
+            <div id="carousel" class="relative w-full aspect-[16/10]">
+              <img
+                class="carousel-slide absolute inset-0 w-full h-full object-contain"
+                src="https://cdn.luogu.com.cn/upload/image_hosting/mve9zhnr.webp"
+                alt="效果图 1"
+              />
+              <img
+                class="carousel-slide absolute inset-0 w-full h-full object-contain"
+                src="https://cdn.luogu.com.cn/upload/image_hosting/rw84ynxk.webp"
+                alt="效果图 2"
+              />
+              <img
+                class="carousel-slide absolute inset-0 w-full h-full object-contain"
+                src="https://cdn.luogu.com.cn/upload/image_hosting/hekjvgy8.webp"
+                alt="效果图 3"
+              />
+              <img
+                class="carousel-slide absolute inset-0 w-full h-full object-contain"
+                src="https://cdn.luogu.com.cn/upload/image_hosting/9waweqde.webp"
+                alt="效果图 4"
+              />
+              <img
+                class="carousel-slide absolute inset-0 w-full h-full object-contain"
+                src="https://cdn.luogu.com.cn/upload/image_hosting/czsm6y6s.webp"
+                alt="效果图 5"
+              />
+              <!-- 指示点 -->
+              <div
+                id="carouselDots"
+                class="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2"
+              ></div>
+            </div>
+          </div>
+
           <!-- 付款卡片 -->
           <div class="glass rounded-3xl p-6 sm:p-14 text-center space-y-8">
             <div class="space-y-2">
@@ -473,6 +525,34 @@ vless://7f3c2d1a-8b4e-4f9a-9c2d-1e3f5a7b8c9d@s5c.cc.cd:443?encryption=none&secur
         const cs = await getChecksum(prefix.toUpperCase());
         console.log(`生成成功: GOOUT-${prefix.toUpperCase()}-${cs}`);
       };
+
+      // 首页效果轮播
+      (() => {
+        const slides = document.querySelectorAll(".carousel-slide");
+        const dotsBox = $("#carouselDots");
+        if (!slides.length) return;
+
+        slides.forEach((_, i) => {
+          const dot = document.createElement("span");
+          dot.className =
+            "carousel-dot w-2 h-2 rounded-full bg-white/30 cursor-pointer";
+          dot.addEventListener("click", () => show(i));
+          dotsBox.appendChild(dot);
+        });
+        const dots = dotsBox.children;
+        let idx = 0;
+
+        function show(i) {
+          slides[idx].classList.remove("active");
+          dots[idx].classList.remove("active");
+          idx = i % slides.length;
+          slides[idx].classList.add("active");
+          dots[idx].classList.add("active");
+        }
+
+        show(0);
+        setInterval(() => show(idx + 1), 3500);
+      })();
 
       // 初始化检查
       if (localStorage.getItem(STORAGE_KEY)) {
